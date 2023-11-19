@@ -37,110 +37,144 @@ This method is intended to be called from a pull request.
 """
 function run_benchmarks(
   repo_name::AbstractString,
-  gist_url::AbstractString,
   bmark_dir::AbstractString;
   reference_branch::AbstractString = "main",
+  gist_url::Union{AbstractString, Nothing} = nothing,
 )
+  has_gist = gist_url !== nothing
+  is_git = isdir(joinpath(bmark_dir, "..", ".git"))
+  @info "" is_git has_gist
 
-  # const repo_name = string(split(ARGS[1], ".")[1])
-  # const gist_url = ARGS[2]
-  gist_id = split(gist_url, "/")[end]
-  # const reference_branch = length(ARGS) > 2 ? ARGS[3] : "main"
+  if has_gist
+    gist_id = split(gist_url, "/")[end]
+    @info "" gist_id
+  end
 
   # if we are running these benchmarks from the git repository
   # we want to develop the package instead of using the release
-  # const bmark_dir = @__DIR__
-  isgit = isdir(joinpath(bmark_dir, "..", ".git"))
-  if isgit
-    Pkg.develop(PackageSpec(url = joinpath(bmark_dir, "..")))
+  if is_git
+    Pkg.develop(PackageSpec(path = joinpath(bmark_dir, "..")))
   else
     Pkg.activate(bmark_dir)
-    Pkg.instantiate()
   end
+  Pkg.instantiate()
 
   # name the benchmark after the repo or the sha of HEAD
-  cd(bmark_dir)
-  bmarkname = isgit ? readchomp(`$git rev-parse HEAD`) : lowercase(repo_name)
+  bmarkname = is_git ? readchomp(`$git rev-parse HEAD`) : lowercase(repo_name)
+  @info "" bmarkname
 
   # Begin benchmarks
   # NB: benchmarkpkg will run benchmarks/benchmarks.jl by default
 
-  commit = benchmarkpkg(repo_name)  # current state of repository
+  @info "benchmarking this_commit" repo_name
+  this_commit = benchmarkpkg(repo_name)  # current state of repository
   local reference
   local judgement
-  if isgit
+  if is_git
+    @info "benchmarking reference branch" reference_branch
     reference = benchmarkpkg(repo_name, reference_branch)
-    judgement = judge(commit, reference)
+    judgement = judge(this_commit, reference)
   end
 
-  commit_stats = bmark_results_to_dataframes(commit)
-  export_markdown("$(bmarkname).md", commit)
+  @info "exporting results to markdown"
+  this_commit_stats = bmark_results_to_dataframes(this_commit)
+  export_markdown("$(bmarkname).md", this_commit)
   local reference_stats
   local judgement_stats
-  if isgit
+  if is_git
     reference_stats = bmark_results_to_dataframes(reference)
+    export_markdown("reference.md", reference)
     judgement_stats = judgement_results_to_dataframes(judgement)
     export_markdown("judgement_$(bmarkname).md", judgement)
-    export_markdown("reference.md", reference)
   end
 
   # extract stats for each benchmark to plot profiles
   # files_dict will be part of json_dict below
   files_dict = Dict{String, Any}()
-  if isgit
+  if is_git
+    @info "saving data, preparing performance profiles"
     for k ∈ keys(judgement_stats)
       # k is the name of a benchmark suite
-      k_stats =
-        Dict{Symbol, DataFrame}(:commit => commit_stats[k], :reference => reference_stats[k])
+      k_stats = Dict{Symbol, DataFrame}(
+        :this_commit => this_commit_stats[k],
+        :reference => reference_stats[k],
+      )
 
       # save benchmark data to jld2 file
       save_stats(k_stats, "$(bmarkname)_vs_reference_$(k).jld2", force = true)
 
-      _ = profile_solvers_from_pkgbmark(k_stats)
-      savefig("profiles_commit_vs_reference_$(k).svg")  # for the artefacts
-      # savefig("profiles_commit_vs_reference_$(k).png")  # for the markdown summary
-      # read contents of svg file to add to gist
-      k_svgfile = open("profiles_commit_vs_reference_$(k).svg", "r") do fd
-        readlines(fd)
+      # plot absolute metrics
+      this_commit_k = this_commit_stats[k]
+      reference_k = reference_stats[k]
+      names = string.(this_commit_k[!, :name])
+      for property ∈ propertynames(this_commit_k)
+        property == :name && continue
+        commit_values = this_commit_k[!, property]
+        reference_values = reference_k[!, property]
+        plot(
+          names,
+          [commit_values, reference_values],
+          title = string(property),
+          label = ["commit" "reference"],
+          linewidth = 2,
+          xticks = (1:length(names), names),
+          xrotation = 45,
+          tickfontsize = 4,
+        )
+        savefig("this_commit_vs_reference_$(k)_$(property).svg")  # for the artifacts
+        savefig("this_commit_vs_reference_$(k)_$(property).png")  # for the markdown summary
       end
-      files_dict["$(k).svg"] = Dict{String, Any}("content" => join(k_svgfile))
+
+      _ = profile_solvers_from_pkgbmark(k_stats)
+      savefig("profiles_this_commit_vs_reference_$(k).svg")  # for the artifacts
+      savefig("profiles_this_commit_vs_reference_$(k).png")  # for the markdown summary
+      if has_gist
+        # read contents of svg file to add to gist
+        k_svgfile = open("profiles_this_commit_vs_reference_$(k).svg", "r") do fd
+          readlines(fd)
+        end
+        files_dict["$(k).svg"] = Dict{String, Any}("content" => join(k_svgfile))
+      end
     end
   end
 
-  mdfiles = [:commit]
-  if isgit
-    push!(mdfiles, :reference)
-    push!(mdfiles, :judgement)
-  end
-  for mdfile ∈ mdfiles
-    files_dict["$(mdfile).md"] =
-      Dict{String, Any}("content" => "$(sprint(export_markdown, eval(mdfile)))")
+  if has_gist
+    mdfiles = [:this_commit]
+    files_dict["this_commit.md"] =
+      Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
+    if is_git
+      files_dict["reference.md"] =
+        Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
+      files_dict["judgement.md"] =
+        Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
+    end
   end
 
-  if isgit
+  if is_git
     # save judgement data to jld2 file
     jldopen("$(bmarkname)_vs_reference_judgement.jld2", "w") do file
       file["jstats"] = judgement_stats
     end
   end
 
-  # json description of gist
-  json_dict = Dict{String, Any}(
-    "description" => "$(repo_name) repository benchmark",
-    "public" => true,
-    "files" => files_dict,
-    "gist_id" => gist_id,
-  )
+  if has_gist
+    # json description of gist
+    json_dict = Dict{String, Any}(
+      "description" => "$(repo_name) repository benchmark",
+      "public" => true,
+      "files" => files_dict,
+      "gist_id" => gist_id,
+    )
 
-  gist_json = "$(bmarkname).json"
-  open(gist_json, "w") do f
-    JSON.print(f, json_dict)
+    gist_json = "$(bmarkname).json"
+    open(gist_json, "w") do f
+      JSON.print(f, json_dict)
+    end
+
+    update_gist_from_json_dict(gist_id, json_dict)
   end
 
-  # posted_gist = create_gist_from_json_dict(json_dict)
-  update_gist_from_json_dict(gist_id, json_dict)
-
-  isgit && write_simple_md_report("$(bmarkname).md")
+  is_git && write_simple_md_report("$(bmarkname).md", this_commit, reference, judgement)
 
   return nothing
 end
@@ -232,18 +266,13 @@ Write a simple Markdown report to file that can be used to comment a pull reques
 
 $(TYPEDSIGNATURES)
 """
-function write_simple_md_report(fname::AbstractString)
+function write_simple_md_report(fname::AbstractString, this_commit, reference, judgement)
   # simpler markdown summary to post in pull request
   open(fname, "w") do f
     println(f, "### Benchmark results")
-    for k ∈ keys(judgement_stats)
-      # TODO: missing a URL for the png
-      println(f, "![$(k) profiles](profiles_commit_vs_reference_$(k).png $(string(k)))")
-      println(f, "<br>")
-    end
     write_md(f, "Judgement", judgement)
     println(f, "<br>")
-    write_md(f, "Commit", commit)
+    write_md(f, "this_commit", this_commit)
     println(f, "<br>")
     write_md(f, "Reference", reference)
   end
