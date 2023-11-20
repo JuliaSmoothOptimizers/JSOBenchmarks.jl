@@ -127,6 +127,10 @@ function run_benchmarks(
         savefig("$(fname).svg")  # for the artifacts
         savefig("$(fname).png")  # for the markdown summary
         push!(svgs, "$(fname).svg")
+        k_svgfile = open("$(fname).svg", "r") do fd
+          readlines(fd)
+        end
+        files_dict["$(fname).svg"] = Dict{String, Any}("content" => join(k_svgfile))
       end
 
       _ = profile_solvers_from_pkgbmark(k_stats)
