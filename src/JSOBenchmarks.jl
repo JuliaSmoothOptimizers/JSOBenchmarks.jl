@@ -139,7 +139,7 @@ function run_benchmarks(
       savefig("$(fname).png")  # for the markdown summary
       push!(svgs, "$(fname).svg")
       # read contents of svg file to add to gist
-      k_svgfile = open("profiles_this_commit_vs_reference_$(k).svg", "r") do fd
+      k_svgfile = open("$(fname).svg", "r") do fd
         readlines(fd)
       end
       files_dict["$(k).svg"] = Dict{String, Any}("content" => join(k_svgfile))
@@ -279,7 +279,7 @@ end
 function write_md(io::IO, title::AbstractString, results)
   println(io, "<details>")
   println(io, "<summary>$(title)</summary>")
-  println(io, "<br>")
+  println(io, "<br>\n")
   println(io, sprint(export_markdown, results))
   println(io, "</details>")
 end
@@ -288,7 +288,7 @@ function write_md_svgs(io::IO, title::AbstractString, gist_url, svgs)
   println(io, "<details>")
   println(io, "<summary>$(title)</summary>")
   for svg ∈ svgs
-    println(io, "<br>")
+    println(io, "<br>\n")
     println(io, "![Plot]($(gist_url)/raw/$(svg)?sanitize=true)")
     # println(io, "$(gist_url)/raw/$(svg)")
   end
