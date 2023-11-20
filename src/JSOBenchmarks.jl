@@ -142,15 +142,15 @@ function run_benchmarks(
     end
   end
 
-  mdfiles = [:this_commit]
-  files_dict["this_commit.md"] =
-    Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
-  if is_git
-    files_dict["reference.md"] =
-      Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
-    files_dict["judgement.md"] =
-      Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
-  end
+  # mdfiles = [:this_commit]
+  # files_dict["this_commit.md"] =
+  #   Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
+  # if is_git
+  #   files_dict["reference.md"] =
+  #     Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
+  #   files_dict["judgement.md"] =
+  #     Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
+  # end
 
   if is_git
     # save judgement data to jld2 file
@@ -159,6 +159,7 @@ function run_benchmarks(
     end
   end
 
+  @info "creating or updating gist"
   # json description of gist
   json_dict = Dict{String, Any}(
     "description" => "$(repo_name) repository benchmark",
@@ -182,6 +183,7 @@ function run_benchmarks(
     new_gist_url = create_gist_from_json_dict(json_dict)
   end
 
+  @info "preparing simple Markdown report"
   is_git && write_simple_md_report(
     "$(bmarkname).md",
     this_commit,
@@ -191,6 +193,7 @@ function run_benchmarks(
     svgs,
   )
 
+  @info "finished"
   return nothing
 end
 
