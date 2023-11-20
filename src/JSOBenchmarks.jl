@@ -180,7 +180,8 @@ function run_benchmarks(
   if update_gist
     update_gist_from_json_dict(gist_id, json_dict)
   else
-    new_gist_url = create_gist_from_json_dict(json_dict)
+    new_gist = create_gist_from_json_dict(json_dict)
+    new_gist_url = string(new_gist.html_url)
   end
 
   @info "preparing simple Markdown report"
