@@ -284,8 +284,8 @@ function write_md_svgs(io::IO, title::AbstractString, gist_url, svgs)
   println(io, "<details>")
   println(io, "<summary>$(title)</summary>")
   for svg ∈ svgs
-    # println(io, "![Plot]($(gist_url)/raw/$(svg)?sanitize=true)")
-    println(io, "$(gist_url)/raw/$(svg)")
+    println(io, "![Plot]($(gist_url)/raw/$(svg)?sanitize=true)")
+    # println(io, "$(gist_url)/raw/$(svg)")
   end
   println(io, "</details>")
 end
