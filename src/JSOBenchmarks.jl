@@ -41,11 +41,12 @@ function run_benchmarks(
   reference_branch::AbstractString = "main",
   gist_url::Union{AbstractString, Nothing} = nothing,
 )
-  has_gist = gist_url !== nothing
+  update_gist = gist_url !== nothing
   is_git = isdir(joinpath(bmark_dir, "..", ".git"))
-  @info "" is_git has_gist
+  @info "" is_git update_gist
 
-  if has_gist
+  local gist_id
+  if update_gist
     gist_id = split(gist_url, "/")[end]
     @info "" gist_id
   end
@@ -163,8 +164,11 @@ function run_benchmarks(
     "description" => "$(repo_name) repository benchmark",
     "public" => true,
     "files" => files_dict,
-    "gist_id" => gist_id,
   )
+
+  if update_gist
+    json_dict["gist_id"] = gist_id
+  end
 
   gist_json = "$(bmarkname).json"
   open(gist_json, "w") do f
@@ -172,7 +176,7 @@ function run_benchmarks(
   end
 
   local new_gist_url
-  if has_gist
+  if update_gist
     update_gist_from_json_dict(gist_id, json_dict)
   else
     new_gist_url = create_gist_from_json_dict(json_dict)
@@ -183,7 +187,7 @@ function run_benchmarks(
     this_commit,
     reference,
     judgement,
-    has_gist ? gist_url : new_gist_url,
+    update_gist ? gist_url : new_gist_url,
     svgs,
   )
 
