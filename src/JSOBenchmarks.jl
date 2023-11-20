@@ -91,6 +91,7 @@ function run_benchmarks(
   # extract stats for each benchmark to plot profiles
   # files_dict will be part of json_dict below
   files_dict = Dict{String, Any}()
+  svgs = String[]
   if is_git
     @info "saving data, preparing performance profiles"
     for k ∈ keys(judgement_stats)
@@ -121,33 +122,33 @@ function run_benchmarks(
           xrotation = 45,
           tickfontsize = 4,
         )
-        savefig("this_commit_vs_reference_$(k)_$(property).svg")  # for the artifacts
-        savefig("this_commit_vs_reference_$(k)_$(property).png")  # for the markdown summary
+        fname = "this_commit_vs_reference_$(k)_$(property)"
+        savefig("$(fname).svg")  # for the artifacts
+        savefig("$(fname).png")  # for the markdown summary
+        push!(svgs, "$(fname).svg")
       end
 
       _ = profile_solvers_from_pkgbmark(k_stats)
-      savefig("profiles_this_commit_vs_reference_$(k).svg")  # for the artifacts
-      savefig("profiles_this_commit_vs_reference_$(k).png")  # for the markdown summary
-      if has_gist
-        # read contents of svg file to add to gist
-        k_svgfile = open("profiles_this_commit_vs_reference_$(k).svg", "r") do fd
-          readlines(fd)
-        end
-        files_dict["$(k).svg"] = Dict{String, Any}("content" => join(k_svgfile))
+      fname = "profiles_this_commit_vs_reference_$(k)"
+      savefig("$(fname).svg")  # for the artifact"
+      savefig("$(fname).png")  # for the markdown summary
+      push!(svgs, "$(fname).svg")
+      # read contents of svg file to add to gist
+      k_svgfile = open("profiles_this_commit_vs_reference_$(k).svg", "r") do fd
+        readlines(fd)
       end
+      files_dict["$(k).svg"] = Dict{String, Any}("content" => join(k_svgfile))
     end
   end
 
-  if has_gist
-    mdfiles = [:this_commit]
-    files_dict["this_commit.md"] =
-      Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
-    if is_git
-      files_dict["reference.md"] =
-        Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
-      files_dict["judgement.md"] =
-        Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
-    end
+  mdfiles = [:this_commit]
+  files_dict["this_commit.md"] =
+    Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
+  if is_git
+    files_dict["reference.md"] =
+      Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
+    files_dict["judgement.md"] =
+      Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
   end
 
   if is_git
@@ -157,24 +158,34 @@ function run_benchmarks(
     end
   end
 
-  if has_gist
-    # json description of gist
-    json_dict = Dict{String, Any}(
-      "description" => "$(repo_name) repository benchmark",
-      "public" => true,
-      "files" => files_dict,
-      "gist_id" => gist_id,
-    )
+  # json description of gist
+  json_dict = Dict{String, Any}(
+    "description" => "$(repo_name) repository benchmark",
+    "public" => true,
+    "files" => files_dict,
+    "gist_id" => gist_id,
+  )
 
-    gist_json = "$(bmarkname).json"
-    open(gist_json, "w") do f
-      JSON.print(f, json_dict)
-    end
-
-    update_gist_from_json_dict(gist_id, json_dict)
+  gist_json = "$(bmarkname).json"
+  open(gist_json, "w") do f
+    JSON.print(f, json_dict)
   end
 
-  is_git && write_simple_md_report("$(bmarkname).md", this_commit, reference, judgement)
+  local new_gist_url
+  if has_gist
+    update_gist_from_json_dict(gist_id, json_dict)
+  else
+    new_gist_url = create_gist_from_json_dict(json_dict)
+  end
+
+  is_git && write_simple_md_report(
+    "$(bmarkname).md",
+    this_commit,
+    reference,
+    judgement,
+    has_gist ? gist_url : new_gist_url,
+    svgs,
+  )
 
   return nothing
 end
@@ -261,15 +272,32 @@ function write_md(io::IO, title::AbstractString, results)
   println(io, "</details>")
 end
 
+function write_md_svgs(io::IO, title::AbstractString, gist_url, svgs)
+  println(io, "<details>")
+  println(io, "<summary>$(title)</summary>")
+  for svg ∈ svgs
+    println(io, "![Plot]($(gist_url)/raw/$(svg)?sanitize=true)")
+  end
+  println(io, "</details>")
+end
+
 """
 Write a simple Markdown report to file that can be used to comment a pull request.
 
 $(TYPEDSIGNATURES)
 """
-function write_simple_md_report(fname::AbstractString, this_commit, reference, judgement)
+function write_simple_md_report(
+  fname::AbstractString,
+  this_commit,
+  reference,
+  judgement,
+  gist_url,
+  svgs,
+)
   # simpler markdown summary to post in pull request
   open(fname, "w") do f
-    println(f, "### Benchmark results")
+    println(f, "### Benchmark Results")
+    write_md_svgs(f, "Overview", gist_url, svgs)
     write_md(f, "Judgement", judgement)
     println(f, "<br>")
     write_md(f, "this_commit", this_commit)
