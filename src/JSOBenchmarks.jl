@@ -142,19 +142,19 @@ function run_benchmarks(
       k_svgfile = open("$(fname).svg", "r") do fd
         readlines(fd)
       end
-      files_dict["$(k).svg"] = Dict{String, Any}("content" => join(k_svgfile))
+      files_dict["$(fname).svg"] = Dict{String, Any}("content" => join(k_svgfile))
     end
   end
 
-  # mdfiles = [:this_commit]
-  # files_dict["this_commit.md"] =
-  #   Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
-  # if is_git
-  #   files_dict["reference.md"] =
-  #     Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
-  #   files_dict["judgement.md"] =
-  #     Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
-  # end
+  mdfiles = [:this_commit]
+  files_dict["this_commit.md"] =
+    Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
+  if is_git
+    files_dict["reference.md"] =
+      Dict{String, Any}("content" => "$(sprint(export_markdown, reference))")
+    files_dict["judgement.md"] =
+      Dict{String, Any}("content" => "$(sprint(export_markdown, judgement))")
+  end
 
   if is_git
     # save judgement data to jld2 file
@@ -290,7 +290,6 @@ function write_md_svgs(io::IO, title::AbstractString, gist_url, svgs)
   for svg ∈ svgs
     println(io, "<br>\n")
     println(io, "![Plot]($(gist_url)/raw/$(svg)?sanitize=true)")
-    # println(io, "$(gist_url)/raw/$(svg)")
   end
   println(io, "</details>")
 end
@@ -310,7 +309,8 @@ function write_simple_md_report(
 )
   # simpler markdown summary to post in pull request
   open(fname, "w") do f
-    println(f, "### Benchmark Results")
+    println(f, "Gist: $(gist_url)\n")
+    println(f, "Full results stored as artifacts\n")
     write_md_svgs(f, "Overview", gist_url, svgs)
     write_md(f, "Judgement", judgement)
     println(f, "<br>")
