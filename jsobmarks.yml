@@ -79,6 +79,5 @@ jobs:
             profiles_this_commit_vs_reference_*.svg
             *_vs_reference_*.jld2
             bmark_*.md
-            this_commit.md
             reference.md
-            judgement.md
+            judgement_*.md
