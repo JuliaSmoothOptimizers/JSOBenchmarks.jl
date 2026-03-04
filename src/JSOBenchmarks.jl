@@ -146,7 +146,6 @@ function run_benchmarks(
     end
   end
 
-  mdfiles = [:this_commit]
   files_dict["this_commit.md"] =
     Dict{String, Any}("content" => "$(sprint(export_markdown, this_commit))")
   if is_git
@@ -190,7 +189,7 @@ function run_benchmarks(
 
   @info "preparing simple Markdown report"
   is_git && write_simple_md_report(
-    "$(bmarkname).md",
+    "bmark_$(bmarkname).md",
     this_commit,
     reference,
     judgement,
