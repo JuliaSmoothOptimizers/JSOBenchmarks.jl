@@ -10,6 +10,7 @@ using Git
 using GitHub
 using JLD2
 using JSON
+using LibGit2
 using PkgBenchmark
 using Plots
 
