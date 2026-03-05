@@ -30,5 +30,39 @@ function run_solver_benchmarks(
   @info "" bmarkname
 
   # Run the benchmark script on this commit
-  this_commit = include(joinpath(bmark_dir, script))
+  this_commit = Base.include(Main, joinpath(bmark_dir, script))
+  @assert this_commit isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(this_commit)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solver function"
+
+  # Run the benchmark script on the reference branch
+  local reference
+  if is_git
+    #reference = _withcommit(f, repo_name, reference_branch)
+  end
+
 end
+
+
+# Runs a script at a commit on a repo and afterwards goes back
+# to the original commit / branch.
+# This code is based on https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/src/util.jl
+function _withcommit(script, repo, commit)
+  original_commit = _shastring(repo, "HEAD")
+  LibGit2.transact(repo) do r
+    branch = try LibGit2.branch(r) catch err; nothing end
+    try
+      LibGit2.checkout!(r, _shastring(r, commit))
+      f()
+    catch err
+        rethrow(err)
+    finally
+      if branch !== nothing
+        LibGit2.branch!(r, branch)
+      else
+        LibGit2.checkout!(r, original_commit)
+      end
+    end
+  end
+end
+
+_shastring(r::LibGit2.GitRepo, targetname) = string(LibGit2.revparseid(r, targetname))
+_shastring(dir::AbstractString, targetname) = LibGit2.with(r -> _shastring(r, targetname), LibGit2.GitRepo(dir))
