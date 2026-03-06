@@ -118,7 +118,7 @@ function _withcommit(script, repo, commit)
   LibGit2.transact(repo) do r
     branch = try LibGit2.branch(r) catch err; nothing end
     try
-      LibGit2.checkout!(r, _sha(r, commit))
+      LibGit2.checkout!(r, _shastring(r, commit))
       result = Base.include(Main, script)
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solver function"
     catch err
