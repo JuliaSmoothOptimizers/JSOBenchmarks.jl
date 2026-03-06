@@ -55,7 +55,7 @@ function run_solver_benchmarks(
         @info "Plotting $key"
         stats_subset = Dict(:this_commit => this_commit[key], :reference => reference[key])
         solved(df) = (df.status .== :first_order)
-        costs = [stats_subset -> .!solved(stats_subset) * Inf + getproperty(stats_subset, value[1]) for value in values]
+        costs = [df -> .!solved(df) * Inf + getproperty(df, value[1]) for value in values]
         costnames = [value[2] for value in values]
 
         p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
