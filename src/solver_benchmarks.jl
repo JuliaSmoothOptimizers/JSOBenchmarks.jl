@@ -113,12 +113,12 @@ end
 # to the original commit / branch.
 # This code is based on https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/src/util.jl
 function _withcommit(script, repo, commit)
-  original_commit = _shastring(repo, "HEAD")
+  original_commit = LibGit2.GitHash(LibGit2.GitObject(repo, "HEAD"))
   local result
   LibGit2.transact(repo) do r
     branch = try LibGit2.branch(r) catch err; nothing end
     try
-      LibGit2.checkout!(r, _shastring(r, commit))
+      LibGit2.checkout!(r, _sha(r, commit))
       result = Base.include(Main, script)
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solver function"
     catch err
@@ -134,7 +134,7 @@ function _withcommit(script, repo, commit)
   return result
 end
 
-function _shastring(r::LibGit2.GitRepo, targetname)
+function _sha(r::LibGit2.GitRepo, targetname)
   branch = LibGit2.lookup_branch(r, targetname)
   @assert branch !== nothing "Branch $(targetname) not found in repository."
   return LibGit2.GitHash(LibGit2.GitObject(r, LibGit2.name(branch)))
