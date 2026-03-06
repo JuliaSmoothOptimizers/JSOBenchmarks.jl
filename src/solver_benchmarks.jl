@@ -135,9 +135,7 @@ function _withcommit(script, repo, commit)
 end
 
 function _shastring(r::LibGit2.GitRepo, targetname)
-  try
-    return string(LibGit2.revparseid(r, targetname))
-  catch
-    return string(LibGit2.revparseid(r, "origin/$targetname"))
-  end
+  branch = LibGit2.lookup_branch(r, targetname)
+  @assert branch !== nothing "Branch $(targetname) not found in repository."
+  return LibGit2.GitHash(LibGit2.GitObject(r, LibGit2.name(branch)))
 end
