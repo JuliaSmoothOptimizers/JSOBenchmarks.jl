@@ -113,6 +113,7 @@ end
 # to the original commit / branch.
 # This code is based on https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/src/util.jl
 function _withcommit(script, repo, commit)
+  println(repo)
   original_commit = string(LibGit2.GitHash(LibGit2.GitObject(repo, "HEAD")))
   local result
   LibGit2.transact(repo) do r
