@@ -113,7 +113,7 @@ end
 # to the original commit / branch.
 # This code is based on https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/src/util.jl
 function _withcommit(script, repo, commit)
-  original_commit = LibGit2.GitHash(LibGit2.GitObject(repo, "HEAD"))
+  original_commit = string(LibGit2.GitHash(LibGit2.GitObject(repo, "HEAD")))
   local result
   LibGit2.transact(repo) do r
     branch = try LibGit2.branch(r) catch err; nothing end
@@ -134,8 +134,8 @@ function _withcommit(script, repo, commit)
   return result
 end
 
-function _sha(r::LibGit2.GitRepo, targetname)
+function _shastring(r::LibGit2.GitRepo, targetname)
   branch = LibGit2.lookup_branch(r, targetname)
   @assert branch !== nothing "Branch $(targetname) not found in repository."
-  return LibGit2.GitHash(LibGit2.GitObject(r, LibGit2.name(branch)))
+  return string(LibGit2.GitHash(LibGit2.GitObject(r, LibGit2.name(branch))))
 end
