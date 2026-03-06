@@ -39,6 +39,8 @@ function run_solver_benchmarks(
   if is_git
     repo_dir = joinpath(bmark_dir, "..")
     repo = LibGit2.GitRepo(repo_dir)
+    println("repo_dir : $repo_dir")
+    println("bmark_dir : $bmark_dir")
     reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch)
   end
 
