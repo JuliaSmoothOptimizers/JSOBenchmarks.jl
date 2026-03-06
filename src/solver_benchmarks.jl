@@ -55,10 +55,7 @@ function run_solver_benchmarks(
         @info "Plotting $key"
         stats_subset = Dict(:this_commit => this_commit[key], :reference => reference[key])
         solved(df) = (df.status .== :first_order)
-        for value in values 
-          @assert hasproperty(df, value[1]) "Expected the stats resulting from the benchmark script to have property $(value[1]), please check the values keyword argument."
-        end
-        costs = [df -> .!solved(df) * Inf + getproperty(df, value[1]) for value in values]
+        costs = [stats_subset -> .!solved(stats_subset) * Inf + getproperty(stats_subset, value[1]) for value in values]
         costnames = [value[2] for value in values]
 
         p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
