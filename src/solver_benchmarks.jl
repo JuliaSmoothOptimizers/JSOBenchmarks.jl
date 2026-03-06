@@ -45,6 +45,8 @@ function run_solver_benchmarks(
   #TODO: save in a jld2 file: see run_benchmarks
 
   # Plotting
+  files_dict = Dict{String, Any}()
+  svgs = String[]
   if is_git
     for key in keys(this_commit)
       if haskey(reference, key)
@@ -60,15 +62,50 @@ function run_solver_benchmarks(
         p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
         fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
+        push!(svgs, "$(fname).svg")
+        content = read(fname, String)
+        files_dict[fname] = Dict("content" => content)
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
     end
-
   end
 
+  @info "creating or updating gist"
+  # json description of gist
+  json_dict = Dict{String, Any}(
+    "description" => "$(repo_name) repository benchmark",
+    "public" => true,
+    "files" => files_dict,
+  )
 
-  
+  if update_gist
+    json_dict["gist_id"] = gist_id
+  end
+
+  gist_json = "$(bmarkname).json"
+  open(gist_json, "w") do f
+    JSON.print(f, json_dict)
+  end
+
+  local new_gist_url
+  if update_gist
+    update_gist_from_json_dict(gist_id, json_dict)
+  else
+    new_gist = create_gist_from_json_dict(json_dict)
+    new_gist_url = string(new_gist.html_url)
+  end
+
+  readme = "# $(repo_name) Solver Benchmarks\n\n"
+  readme *= "Comparison between current commit and $(reference_branch).\n\n"
+
+  for svg in svgs
+    title = replace(svg, ".svg" => "")
+    readme *= "## $(title)\n\n"
+    readme *= "![]($(svg))\n\n"
+  end
+
+  files_dict["README.md"] = Dict("content" => readme)
 end
 
 
