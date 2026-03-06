@@ -134,5 +134,10 @@ function _withcommit(script, repo, commit)
   return result
 end
 
-_shastring(r::LibGit2.GitRepo, targetname) = string(LibGit2.revparseid(r, targetname))
-_shastring(dir::AbstractString, targetname) = LibGit2.with(r -> _shastring(r, targetname), LibGit2.GitRepo(dir))
+function _shastring(r::LibGit2.GitRepo, targetname)
+  try
+    return string(LibGit2.revparseid(r, targetname))
+  catch
+    return string(LibGit2.revparseid(r, "origin/$targetname"))
+  end
+end
