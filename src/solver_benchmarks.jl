@@ -140,6 +140,8 @@ end
 function _shastring(r::LibGit2.GitRepo, targetname)
   branch = LibGit2.lookup_branch(r, targetname)
   branch = branch === nothing ? LibGit2.lookup_branch(r, targetname, true) : branch # Search remote as well if not found locally.
+  branch = branch === nothing ? LibGit2.lookup_branch(r, "origin/$(targetname)") : branch
+  branch = branch === nothing ? LibGit2.lookup_branch(r, "origin/$(targetname)", true) : branch # Search remote as well if not found locally.
   @assert branch !== nothing "Branch $(targetname) not found in repository."
   return string(LibGit2.GitHash(LibGit2.GitObject(r, LibGit2.name(branch))))
 end
