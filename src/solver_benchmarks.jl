@@ -62,7 +62,7 @@ function run_solver_benchmarks(
         fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
         push!(svgs, "$(fname).svg")
-        content = read(fname, String)
+        content = read("$(fname).svg", String)
         files_dict[fname] = Dict("content" => content)
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
