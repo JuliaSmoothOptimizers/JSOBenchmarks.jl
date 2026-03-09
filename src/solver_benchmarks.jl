@@ -32,7 +32,7 @@ function run_solver_benchmarks(
 
   # Run the benchmark script on this commit
   this_commit = Base.include(Main, joinpath(bmark_dir, script))
-  @assert this_commit isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(this_commit)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solver function"
+  @assert this_commit isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(this_commit)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
 
   # Run the benchmark script on the reference branch
   local reference
@@ -125,7 +125,7 @@ function _withcommit(script, repo, commit)
     try
       LibGit2.checkout!(r, _shastring(r, commit))
       result = Base.include(Main, script)
-      @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solver function"
+      @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
     catch err
         rethrow(err)
     finally
