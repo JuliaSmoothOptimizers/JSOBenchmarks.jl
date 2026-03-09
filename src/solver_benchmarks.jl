@@ -45,8 +45,8 @@ function run_solver_benchmarks(
   # Plotting and tables
   files_dict = Dict{String, Any}()
   svgs = String[]
-  stats_columns = [:name, :f, :t]
-  hdr_override = Dict([:name => "Name", :f => "f(x)", :t => "Time"])
+  stats_columns = [:name, :objective, :elapsed_time]
+  hdr_override = Dict([:name => "Name", :objective => "f(x)", :elapsed_time => "Time"])
   tables = "# Solver Benchmarks Tables \n\n"
   if is_git
     for key in keys(this_commit)
@@ -63,10 +63,10 @@ function run_solver_benchmarks(
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
         files_dict["$(fname).svg"] = Dict("content" => content)
-
+        println(this_commit[key])
         tables *= "\n" * fname * "\n"
-        tables *= pretty_stats(String, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown)
-        tables *= pretty_stats(String, reference[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown)
+        tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
+        tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
