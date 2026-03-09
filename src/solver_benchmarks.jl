@@ -87,14 +87,6 @@ function run_solver_benchmarks(
     JSON.print(f, json_dict)
   end
 
-  local new_gist_url
-  if update_gist
-    update_gist_from_json_dict(gist_id, json_dict)
-  else
-    new_gist = create_gist_from_json_dict(json_dict)
-    new_gist_url = string(new_gist.html_url)
-  end
-
   readme = "# $(repo_name) Solver Benchmarks\n\n"
   readme *= "Comparison between current commit and $(reference_branch).\n\n"
 
@@ -105,6 +97,28 @@ function run_solver_benchmarks(
   end
 
   files_dict["README.md"] = Dict("content" => readme)
+
+  local new_gist_url
+  if update_gist
+    update_gist_from_json_dict(gist_id, json_dict)
+  else
+    new_gist = create_gist_from_json_dict(json_dict)
+    new_gist_url = string(new_gist.html_url)
+  end
+
+  @info "preparing simple Markdown report"
+  is_git &&
+    write_simple_md_report(
+      "bmark_$(bmarkname).md",
+      this_commit,
+      reference,
+      nothing,
+      new_gist_url,
+      svgs,
+    )
+  
+  @info "finished"
+  return nothing
 end
 
 
