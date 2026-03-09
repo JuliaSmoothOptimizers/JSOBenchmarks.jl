@@ -313,12 +313,24 @@ function write_simple_md_report(
   open(fname, "w") do f
     println(f, "Gist: $(gist_url)\n")
     println(f, "Full results stored as artifacts\n")
-    write_md_svgs(f, "Overview", gist_url, svgs)
-    write_md(f, "Judgement", judgement)
-    println(f, "<br>")
-    write_md(f, "this_commit", this_commit)
-    println(f, "<br>")
-    write_md(f, "Reference", reference)
+
+    if !isempty(svgs)
+      write_md_svgs(f, "Overview", gist_url, svgs)
+    end
+
+    if judgement !== nothing
+      write_md(f, "Judgement", judgement)
+      println(f, "<br>")
+    end
+
+    if this_commit !== nothing
+      write_md(f, "this_commit", this_commit)
+      println(f, "<br>")
+    end
+
+    if reference !== nothing
+      write_md(f, "Reference", reference)
+    end
   end
 end
 
