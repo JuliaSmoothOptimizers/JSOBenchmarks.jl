@@ -108,7 +108,7 @@ function run_solver_benchmarks(
     )
   
   @info "finished"
-  return nothing
+  return update_gist ? gist_url : new_gist_url
 end
 
 

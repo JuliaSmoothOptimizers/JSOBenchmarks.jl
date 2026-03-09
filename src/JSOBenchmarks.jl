@@ -201,7 +201,7 @@ function run_benchmarks(
   )
 
   @info "finished"
-  return nothing
+  return update_gist ? gist_url : new_gist_url
 end
 
 # Utility functions
