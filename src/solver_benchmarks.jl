@@ -58,12 +58,12 @@ function run_solver_benchmarks(
         costnames = [value[2] for value in values]
 
         p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
-        fname = "## This commit vs reference: $(key)\n\n"
+        fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
         files_dict["$(fname).svg"] = Dict("content" => content)
-        tables *= "\n" * fname * "\n"
+        tables *= "\n## This commit vs reference: $(key)\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
         tables *= "\n"
         tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
