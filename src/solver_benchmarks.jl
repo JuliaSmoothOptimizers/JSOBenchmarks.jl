@@ -63,9 +63,10 @@ function run_solver_benchmarks(
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
         files_dict["$(fname).svg"] = Dict("content" => content)
-        tables *= "\n## This commit vs reference: $(key)\n\n\n"
+        tables *= "\n## This commit vs reference: $(key)\n\n"
+        tables *= "### This commit\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
-        tables *= "\n"
+        tables *= "\n\n### Reference\n\n\n"
         tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
