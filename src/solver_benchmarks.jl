@@ -58,12 +58,15 @@ function run_solver_benchmarks(
         costnames = [value[2] for value in values]
 
         p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
-        tables *= pretty_stats(String, stats_subset[!, stats_columns], hdr_override = hdr_override, tf=tf_markdown)
         fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
         files_dict["$(fname).svg"] = Dict("content" => content)
+
+        tables *= "\n" * fname * "\n"
+        tables *= pretty_stats(String, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown)
+        tables *= pretty_stats(String, reference[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown)
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
