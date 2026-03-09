@@ -110,8 +110,8 @@ function run_solver_benchmarks(
   is_git &&
     write_simple_md_report(
       "bmark_$(bmarkname).md",
-      this_commit,
-      reference,
+      nothing,
+      nothing,
       nothing,
       new_gist_url,
       svgs,
