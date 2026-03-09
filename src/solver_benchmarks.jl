@@ -42,9 +42,12 @@ function run_solver_benchmarks(
     reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch)
   end
 
-  # Plotting
+  # Plotting and tables
   files_dict = Dict{String, Any}()
   svgs = String[]
+  stats_columns = [:name, :f, :t]
+  hdr_override = Dict([:name => "Name", :f => "f(x)", :t => "Time"])
+  tables = "# Solver Benchmarks Tables \n\n"
   if is_git
     for key in keys(this_commit)
       if haskey(reference, key)
@@ -55,6 +58,7 @@ function run_solver_benchmarks(
         costnames = [value[2] for value in values]
 
         p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
+        tables *= pretty_stats(String, stats_subset[!, stats_columns], hdr_override = hdr_override, tf=tf_markdown)
         fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
         push!(svgs, "$(fname).svg")
@@ -70,6 +74,7 @@ function run_solver_benchmarks(
   readme *= "Comparison between current commit and $(reference_branch).\n\n"
 
   files_dict["README.md"] = Dict("content" => readme)
+  files_dict["TABLES.md"] = Dict("content" => tables)
 
   @info "creating or updating gist"
   # json description of gist
