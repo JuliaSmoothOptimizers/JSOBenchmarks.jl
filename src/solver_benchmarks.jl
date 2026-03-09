@@ -66,6 +66,11 @@ function run_solver_benchmarks(
     end
   end
 
+  readme = "# $(repo_name) Solver Benchmarks\n\n"
+  readme *= "Comparison between current commit and $(reference_branch).\n\n"
+
+  files_dict["README.md"] = Dict("content" => readme)
+
   @info "creating or updating gist"
   # json description of gist
   json_dict = Dict{String, Any}(
@@ -82,11 +87,6 @@ function run_solver_benchmarks(
   open(gist_json, "w") do f
     JSON.print(f, json_dict)
   end
-
-  readme = "# $(repo_name) Solver Benchmarks\n\n"
-  readme *= "Comparison between current commit and $(reference_branch).\n\n"
-
-  files_dict["README.md"] = Dict("content" => readme)
 
   local new_gist_url
   if update_gist
