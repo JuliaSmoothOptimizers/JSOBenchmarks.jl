@@ -42,8 +42,6 @@ function run_solver_benchmarks(
     reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch)
   end
 
-  #TODO: save in a jld2 file: see run_benchmarks
-
   # Plotting
   files_dict = Dict{String, Any}()
   svgs = String[]
@@ -105,7 +103,7 @@ function run_solver_benchmarks(
       nothing,
       nothing,
       nothing,
-      new_gist_url,
+      update_gist ? gist_url : new_gist_url,
       svgs,
     )
   
