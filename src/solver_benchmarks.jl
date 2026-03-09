@@ -63,7 +63,7 @@ function run_solver_benchmarks(
         savefig("$(fname).svg")
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
-        files_dict[fname] = Dict("content" => content)
+        files_dict["$(fname).svg"] = Dict("content" => content)
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
@@ -89,12 +89,6 @@ function run_solver_benchmarks(
 
   readme = "# $(repo_name) Solver Benchmarks\n\n"
   readme *= "Comparison between current commit and $(reference_branch).\n\n"
-
-  for svg in svgs
-    title = replace(svg, ".svg" => "")
-    readme *= "## $(title)\n\n"
-    readme *= "![]($(svg))\n\n"
-  end
 
   files_dict["README.md"] = Dict("content" => readme)
 
