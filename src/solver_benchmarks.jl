@@ -74,10 +74,6 @@ function run_solver_benchmarks(
     end
   end
 
-  readme = "# $(repo_name) Solver Benchmarks\n\n"
-  readme *= "Comparison between current commit and $(reference_branch).\n\n"
-
-  files_dict["README.md"] = Dict("content" => readme)
   files_dict["TABLES.md"] = Dict("content" => tables)
 
   @info "creating or updating gist"
