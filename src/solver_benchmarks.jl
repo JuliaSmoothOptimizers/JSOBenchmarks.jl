@@ -4,7 +4,8 @@ function run_solver_benchmarks(
   reference_branch::AbstractString = "main",
   gist_url::Union{AbstractString, Nothing} = nothing,
   script = "benchmarks.jl",
-  values = [(:elapsed_time, "CPU Time"), (:neval_obj, "# Objective Evals"), (:neval_grad, "# Gradient Evals")],
+  profile_values = [(:elapsed_time, "CPU Time"), (:neval_obj, "# Objective Evals"), (:neval_grad, "# Gradient Evals")],
+  table_values = [(:name, "Name"), (:objective, "f(x)"), (:elapsed_time, "Time")]
 )
 
   update_gist = gist_url !== nothing
@@ -45,24 +46,28 @@ function run_solver_benchmarks(
   # Plotting and tables
   files_dict = Dict{String, Any}()
   svgs = String[]
-  stats_columns = [:name, :objective, :elapsed_time]
-  hdr_override = Dict([:name => "Name", :objective => "f(x)", :elapsed_time => "Time"])
+
+  solved(df) = (df.status .== :first_order)
+  costs = [df -> .!solved(df) * Inf + getproperty(df, value[1]) for value in profile_values]
+  costnames = [value[2] for value in profile_values]
+
+  stats_columns = [value[1] for value in table_values]
+  hdr_override = [value[2] for value in table_values]
+
   tables = "# Solver Benchmarks Tables \n\n"
   if is_git
     for key in keys(this_commit)
       if haskey(reference, key)
         @info "Plotting $key"
         stats_subset = Dict(:this_commit => this_commit[key], :reference => reference[key])
-        solved(df) = (df.status .== :first_order)
-        costs = [df -> .!solved(df) * Inf + getproperty(df, value[1]) for value in values]
-        costnames = [value[2] for value in values]
-
-        p = profile_solvers(stats_subset, costs, costnames;xlabel = "", ylabel = "")
+        p = profile_solvers(stats_subset, costs, costnames, xlabel = "", ylabel = "")
         fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
         files_dict["$(fname).svg"] = Dict("content" => content)
+
+        @info "Creating tables for $key"
         tables *= "\n## This commit vs reference: $(key)\n\n"
         tables *= "### This commit\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
