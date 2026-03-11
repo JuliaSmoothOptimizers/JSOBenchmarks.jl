@@ -52,7 +52,6 @@ function run_solver_benchmarks(
   costnames = [value[2] for value in profile_values]
 
   stats_columns = [value[1] for value in table_values]
-  hdr_override = [value[2] for value in table_values]
 
   tables = "# Solver Benchmarks Tables \n\n"
   if is_git
@@ -70,9 +69,9 @@ function run_solver_benchmarks(
         @info "Creating tables for $key"
         tables *= "\n## This commit vs reference: $(key)\n\n"
         tables *= "### This commit\n\n\n"
-        tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
+        tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = table_values, tf=tf_markdown))
         tables *= "\n\n### Reference\n\n\n"
-        tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = hdr_override, tf=tf_markdown))
+        tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = table_values, tf=tf_markdown))
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
