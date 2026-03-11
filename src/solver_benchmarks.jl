@@ -4,8 +4,8 @@ function run_solver_benchmarks(
   reference_branch::AbstractString = "main",
   gist_url::Union{AbstractString, Nothing} = nothing,
   script = "benchmarks.jl",
-  profile_values = [(:elapsed_time, "CPU Time"), (:neval_obj, "# Objective Evals"), (:neval_grad, "# Gradient Evals")],
-  table_values = [(:name, "Name"), (:objective, "f(x)"), (:elapsed_time, "Time")]
+  profile_values = solver_benchmark_profile_values(),
+  table_values = solver_benchmark_table_values()
 )
 
   update_gist = gist_url !== nothing
@@ -121,6 +121,13 @@ function run_solver_benchmarks(
   return update_gist ? gist_url : new_gist_url
 end
 
+function solver_benchmark_profile_values()
+  return [(:elapsed_time, "CPU Time"), (:neval_obj, "# Objective Evals"), (:neval_grad, "# Gradient Evals")]
+end
+
+function solver_benchmark_table_values()
+  return [(:name, "Name"), (:objective, "f(x)"), (:elapsed_time, "Time")]
+end
 
 # Runs a script at a commit on a repo and afterwards goes back
 # to the original commit / branch.
