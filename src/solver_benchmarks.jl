@@ -164,7 +164,7 @@ function _withcommit(script, repo, commit)
 end
 
 function _run_local(script, file_name)
-  res = include(Main, script)
+  res = Base.include(Main, script)
   open(file_name, "w") do io
     JSON.write(io, res)
   end
