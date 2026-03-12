@@ -40,9 +40,6 @@ function run_solver_benchmarks(
   if is_git
     repo_dir = joinpath(bmark_dir, "..")
     repo = LibGit2.GitRepo(repo_dir)
-    println(bmark_dir)
-    println(script)
-    println(joinpath(bmark_dir, script))
     reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch)
   end
 
@@ -145,9 +142,12 @@ function _withcommit(script, repo, commit)
       env_to_use = dirname(Pkg.Types.Context().env.project_file) 
       exec_str =
         """
-        include($(repr(script)))
+        using JSOBenchmarks
+        JSOBenchmarks._run_local($repr(script), "temp_result.json")
         """
       run(`$(Base.julia_cmd()) --project=$env_to_use --depwarn=no -e $exec_str`)
+
+      result = JSON.read(read("temp_result.json", String), Dict{Symbol, DataFrame})
 
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
     catch err
@@ -161,6 +161,13 @@ function _withcommit(script, repo, commit)
     end
   end
   return result
+end
+
+function _run_local(script, file_name)
+  include(script)
+  open(file_name, "w") do io
+    JSON.write(io, res)
+  end
 end
 
 function _shastring(r::LibGit2.GitRepo, targetname)
