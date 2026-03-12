@@ -64,6 +64,7 @@ function run_solver_benchmarks(
         p = profile_solvers(stats_subset, costs, costnames, xlabel = "", ylabel = "")
         fname = "this_commit_vs_reference_$(key)"
         savefig("$(fname).svg")
+        savefig("profiles_$(fname).pdf")
         push!(svgs, "$(fname).svg")
         content = read("$(fname).svg", String)
         files_dict["$(fname).svg"] = Dict("content" => content)
