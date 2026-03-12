@@ -147,7 +147,7 @@ function _withcommit(script, repo, commit)
         """
       run(`$(Base.julia_cmd()) --project=$env_to_use --depwarn=no -e $exec_str`)
 
-      result = JSON.read(read("temp_result.json", String), Dict{Symbol, DataFrame})
+      result = load("temp.jld2")["result"]
 
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
     catch err
@@ -164,10 +164,8 @@ function _withcommit(script, repo, commit)
 end
 
 function _run_local(script, file_name)
-  res = Base.include(Main, script)
-  open(file_name, "w") do io
-    JSON.write(io, res)
-  end
+  result = Base.include(Main, script)
+  @save "temp.jld2" result
 end
 
 function _shastring(r::LibGit2.GitRepo, targetname)
