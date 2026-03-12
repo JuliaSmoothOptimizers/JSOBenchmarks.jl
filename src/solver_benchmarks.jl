@@ -34,13 +34,14 @@ function run_solver_benchmarks(
   # Run the benchmark script on this commit
   this_commit = Base.include(Main, joinpath(bmark_dir, script))
   @assert this_commit isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(this_commit)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
+  @save "$(bmarkname)_solver_benchmarks_this_commit.jld2" this_commit
 
   # Run the benchmark script on the reference branch
   local reference
   if is_git
     repo_dir = joinpath(bmark_dir, "..")
     repo = LibGit2.GitRepo(repo_dir)
-    reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch)
+    reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch, bmarkname = bmarkname)
   end
 
   # Plotting and tables
@@ -54,6 +55,7 @@ function run_solver_benchmarks(
   stats_columns = [value[1] for value in table_values]
 
   tables = "# Solver Benchmarks Tables \n\n"
+  latex_tables = "# Solver Benchmarks Tables \n\n"
   if is_git
     for key in keys(this_commit)
       if haskey(reference, key)
@@ -67,11 +69,17 @@ function run_solver_benchmarks(
         files_dict["$(fname).svg"] = Dict("content" => content)
 
         @info "Creating tables for $key"
+        # TODO: make a function to avoid code repetition here
         tables *= "\n## This commit vs reference: $(key)\n\n"
+        latex_tables *= "\n## This commit vs reference: $(key)\n\n"
         tables *= "### This commit\n\n\n"
+        latex_tables *= "### This commit\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
+        latex_tables *= sprint(io -> pretty_latex_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_latex))
         tables *= "\n\n### Reference\n\n\n"
+        latex_tables *= "\n\n### Reference\n\n\n"
         tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
+        latex_tables *= sprint(io -> pretty_latex_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_latex))
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
@@ -79,6 +87,7 @@ function run_solver_benchmarks(
   end
 
   files_dict["tables.md"] = Dict("content" => tables)
+  @save "$(bmarkname)_solver_benchmarks_tables.txt" latex_tables
 
   @info "creating or updating gist"
   # json description of gist
@@ -131,7 +140,7 @@ end
 # Runs a script at a commit on a repo and afterwards goes back
 # to the original commit / branch.
 # This code is based on https://github.com/JuliaCI/PkgBenchmark.jl/blob/master/src/util.jl
-function _withcommit(script, repo, commit)
+function _withcommit(script, repo, commit; bmarkname = "")
   original_commit = string(LibGit2.GitHash(LibGit2.GitObject(repo, "HEAD")))
   local result
   LibGit2.transact(repo) do r
@@ -140,14 +149,15 @@ function _withcommit(script, repo, commit)
       LibGit2.checkout!(r, _shastring(r, commit))
 
       env_to_use = dirname(Pkg.Types.Context().env.project_file) 
+      save_file_name = "$(bmarkname)_solver_benchmarks_$(commit)"
       exec_str =
         """
         using JSOBenchmarks
-        JSOBenchmarks._run_local($(repr(script)), "temp_result.json")
+        JSOBenchmarks._run_local($(repr(script)), $(save_file_name))
         """
       run(`$(Base.julia_cmd()) --project=$env_to_use --depwarn=no -e $exec_str`)
 
-      result = load("temp.jld2")["result"]
+      result = load("$(save_file_name).jld2")["result"]
 
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
     catch err
@@ -163,9 +173,9 @@ function _withcommit(script, repo, commit)
   return result
 end
 
-function _run_local(script, file_name)
+function _run_local(script, save_file_name)
   result = Base.include(Main, script)
-  @save "temp.jld2" result
+  @save "$(save_file_name).jld2" result
 end
 
 function _shastring(r::LibGit2.GitRepo, targetname)
