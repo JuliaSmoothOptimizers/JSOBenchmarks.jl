@@ -78,7 +78,7 @@ function run_solver_benchmarks(
     end
   end
 
-  files_dict["TABLES.md"] = Dict("content" => tables)
+  files_dict["tables.md"] = Dict("content" => tables)
 
   @info "creating or updating gist"
   # json description of gist
@@ -138,6 +138,8 @@ function _withcommit(script, repo, commit)
     branch = try LibGit2.branch(r) catch err; nothing end
     try
       LibGit2.checkout!(r, _shastring(r, commit))
+      # Recompile package
+      Pkg.precompile()
       result = Base.include(Main, script)
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
     catch err
