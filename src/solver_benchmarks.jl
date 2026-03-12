@@ -40,6 +40,9 @@ function run_solver_benchmarks(
   if is_git
     repo_dir = joinpath(bmark_dir, "..")
     repo = LibGit2.GitRepo(repo_dir)
+    println(bmark_dir)
+    println(script)
+    println(joinpath(bmark_dir, script))
     reference = _withcommit(joinpath(bmark_dir, script), repo, reference_branch)
   end
 
@@ -138,9 +141,14 @@ function _withcommit(script, repo, commit)
     branch = try LibGit2.branch(r) catch err; nothing end
     try
       LibGit2.checkout!(r, _shastring(r, commit))
-      # Recompile package
-      Pkg.precompile()
-      result = Base.include(Main, script)
+
+      env_to_use = dirname(Pkg.Types.Context().env.project_file) 
+      exec_str =
+        """
+        include($(repr(script)))
+        """
+      run(`$(Base.julia_cmd()) --project=$env_to_use --depwarn=no -e $exec_str`)
+
       @assert result isa Dict{Symbol, DataFrame} "Expected the benchmark script to return a Dict{Symbol, DataFrame}, but got $(typeof(result)). Make sure your benchmark script returns a dict resulting from BenchmarkSolver.bmark_solvers function"
     catch err
         rethrow(err)
