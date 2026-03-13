@@ -154,7 +154,7 @@ function _withcommit(script, repo, commit; bmarkname = "")
       exec_str =
         """
         using JSOBenchmarks
-        JSOBenchmarks._run_local($(repr(script)), $(save_file_name))
+        JSOBenchmarks._run_local($(repr(script)), "$(save_file_name)")
         """
       run(`$(Base.julia_cmd()) --project=$env_to_use --depwarn=no -e $exec_str`)
 
