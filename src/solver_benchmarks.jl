@@ -150,7 +150,7 @@ function _withcommit(script, repo, commit; bmarkname = "")
       LibGit2.checkout!(r, _shastring(r, commit))
 
       env_to_use = dirname(Pkg.Types.Context().env.project_file) 
-      save_file_name = "$(bmarkname)_solver_benchmarks_$(commit)"
+      save_file_name = "$(bmarkname)_solver_benchmarks_reference"
       exec_str =
         """
         using JSOBenchmarks
