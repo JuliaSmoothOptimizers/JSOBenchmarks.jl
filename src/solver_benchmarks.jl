@@ -58,7 +58,6 @@ function run_solver_benchmarks(
   stats_columns = [value[1] for value in table_values]
 
   tables = "# Solver Benchmarks Tables \n\n"
-  latex_tables = "# Solver Benchmarks Tables \n\n"
   if is_git
     for key in keys(this_commit)
       if haskey(reference, key)
@@ -73,17 +72,17 @@ function run_solver_benchmarks(
         files_dict["$(fname).svg"] = Dict("content" => content)
 
         @info "Creating tables for $key"
-        # TODO: make a function to avoid code repetition here
         tables *= "\n## This commit vs reference: $(key)\n\n"
-        latex_tables *= "\n## This commit vs reference: $(key)\n\n"
         tables *= "### This commit\n\n\n"
-        latex_tables *= "### This commit\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
-        latex_tables *= sprint(io -> pretty_latex_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values)))
+        open("this_commit_$(key).tex", "w") do io
+          pretty_latex_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values))
+        end
         tables *= "\n\n### Reference\n\n\n"
-        latex_tables *= "\n\n### Reference\n\n\n"
         tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
-        latex_tables *= sprint(io -> pretty_latex_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values)))
+        open("reference_$(key).tex", "w") do io
+          pretty_latex_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values))
+        end
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
@@ -91,9 +90,6 @@ function run_solver_benchmarks(
   end
 
   files_dict["tables.md"] = Dict("content" => tables)
-  open("$(bmarkname)_solver_benchmarks_tables.txt", "w") do io
-    println(io, latex_tables)
-  end
 
   @info "creating or updating gist"
   # json description of gist
