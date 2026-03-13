@@ -76,11 +76,11 @@ function run_solver_benchmarks(
         tables *= "### This commit\n\n\n"
         latex_tables *= "### This commit\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
-        latex_tables *= sprint(io -> pretty_latex_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_latex))
+        latex_tables *= sprint(io -> pretty_latex_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values)))
         tables *= "\n\n### Reference\n\n\n"
         latex_tables *= "\n\n### Reference\n\n\n"
         tables *= sprint(io -> pretty_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
-        latex_tables *= sprint(io -> pretty_latex_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_latex))
+        latex_tables *= sprint(io -> pretty_latex_stats(io, reference[key][!, stats_columns], hdr_override = Dict(table_values)))
       else
         @warn "$(reference_branch) branch benchmarks do not run the solver $key. Please update the benchmark solver list in a separate PR and rebase."
       end
