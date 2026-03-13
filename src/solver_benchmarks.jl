@@ -45,8 +45,8 @@ function run_solver_benchmarks(
   # Plotting and tables
   local profile_values, table_values
 
-  profile_values = Main.solver_benchmark_profile_values()
-  table_values = Main.solver_benchmark_table_values()
+  profile_values = Base.invokelatest(solver_benchmark_profile_values)
+  table_values = Base.invokelatest(solver_benchmark_table_values)
 
   files_dict = Dict{String, Any}()
   svgs = String[]
