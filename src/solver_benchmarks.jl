@@ -88,7 +88,9 @@ function run_solver_benchmarks(
   end
 
   files_dict["tables.md"] = Dict("content" => tables)
-  @save "$(bmarkname)_solver_benchmarks_tables.txt" latex_tables
+  open("$(bmarkname)_solver_benchmarks_tables.txt", "w") do io
+    println(io, latex_tables)
+  end
 
   @info "creating or updating gist"
   # json description of gist
