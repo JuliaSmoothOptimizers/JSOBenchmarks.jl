@@ -4,8 +4,6 @@ function run_solver_benchmarks(
   reference_branch::AbstractString = "main",
   gist_url::Union{AbstractString, Nothing} = nothing,
   script = "benchmarks.jl",
-  profile_values = solver_benchmark_profile_values(),
-  table_values = solver_benchmark_table_values()
 )
 
   update_gist = gist_url !== nothing
@@ -45,6 +43,11 @@ function run_solver_benchmarks(
   end
 
   # Plotting and tables
+  local profile_values, table_values
+
+  profile_values = Main.solver_benchmark_profile_values()
+  table_values = Main.solver_benchmark_table_values()
+
   files_dict = Dict{String, Any}()
   svgs = String[]
 
