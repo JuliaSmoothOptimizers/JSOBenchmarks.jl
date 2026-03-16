@@ -116,16 +116,17 @@ function run_solver_benchmarks(
     new_gist_url = string(new_gist.html_url)
   end
 
-  @info "preparing simple Markdown report"
-  is_git &&
-    write_simple_md_report(
-      "bmark_$(bmarkname).md",
-      nothing,
-      nothing,
-      nothing,
-      update_gist ? gist_url : new_gist_url,
-      svgs,
-    )
+  # TODO: Update the markdown report instead!
+  # @info "preparing simple Markdown report"
+  # is_git &&
+  #   write_simple_md_report(
+  #     "bmark_$(bmarkname).md",
+  #     nothing,
+  #     nothing,
+  #     nothing,
+  #     update_gist ? gist_url : new_gist_url,
+  #     svgs,
+  #   )
   
   @info "finished"
   return update_gist ? gist_url : new_gist_url
