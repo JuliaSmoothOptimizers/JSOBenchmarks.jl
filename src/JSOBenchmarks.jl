@@ -114,12 +114,9 @@ function run_benchmarks(
         property == :name && continue
         commit_values = this_commit_k[!, property]
         reference_values = reference_k[!, property]
-        println("names", names)
-        println("commit_values", commit_values)
-        println("reference_values", reference_values)
         groupedbar(
           names,
-          [commit_values, reference_values],
+          [commit_values reference_values],
           title = string(property),
           label = ["commit" "reference"],
           bar_width = 0.7,
