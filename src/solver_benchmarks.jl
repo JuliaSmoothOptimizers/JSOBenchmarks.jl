@@ -171,7 +171,7 @@ function run_solver_benchmarks(
   # Update markdown report
   if is_git
     fname = "bmark_$(bmarkname).md"
-    open(fname, "w") do f
+    open(fname, "a") do f
       write_md_svgs(f, "SolverBenchmark Profiles", gist_url, svgs)
     end
   end
