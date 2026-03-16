@@ -121,7 +121,6 @@ function run_benchmarks(
           label = ["commit" "reference"],
           bar_width = 0.7,
           bar_position = :dodge,
-          xticks = (1:length(names), names),
           xrotation = 45,
           tickfontsize = 4,
         )
