@@ -1,3 +1,55 @@
+"""
+    run_solver_benchmarks(repo_name, bmark_dir; reference_branch="main", gist_url=nothing, script="benchmarks.jl")
+
+Run a benchmark script, based on the SolverBenchmarks.jl package, for a Julia repository.
+
+This function executes a benchmark script (`script`) in the specified benchmark directory (`bmark_dir`) for 
+the current state of the repository containing `repo_name`. 
+The output of the script should be a result of `BenchmarkSolver.bmark_solvers`. If the repository is a Git repository, the 
+benchmarks are run on the current commit and optionally compared to a reference branch (default `"main"`). 
+The results are saved as `.jld2` files, performance profile plots and summary tables are generated. 
+Optionally, results can be uploaded or updated in a GitHub Gist (`gist_url`).
+
+# Arguments
+
+- `repo_name::AbstractString`  
+  The name of the Julia package repository being benchmarked.
+
+- `bmark_dir::AbstractString`  
+  Path to the directory containing the benchmark scripts. This is usually a `benchmarks/` folder 
+  inside the repository.
+
+# Keyword Arguments
+
+- `reference_branch::AbstractString = "main"`  
+  The Git branch used as a reference for comparison in plots and tables.
+
+- `gist_url::Union{AbstractString, Nothing} = nothing`  
+  If provided, the function updates the existing Gist at this URL. Otherwise, a new Gist is created.
+
+- `script::AbstractString = "benchmarks.jl"`  
+  The Julia script in `bmark_dir` that runs the benchmark suite. Must return a `Dict{Symbol, DataFrame}` 
+  as produced by `BenchmarkSolver.bmark_solvers`.
+
+# Output
+
+Returns a `String` containing the URL of the Gist with benchmark results. If `gist_url` was provided, 
+the existing Gist is updated; otherwise, a new Gist URL is returned.
+
+# Plots and Tables values
+
+In order to compare specific outputs from the benchmark results, the `script` can override the functions
+    JSOBenchmarks.solver_benchmark_profile_values()
+    JSOBenchmarks.solver_benchmark_table_values()
+to specify which columns from the DataFrames should be used for the performance profiles and summary tables, respectively.
+Both should return an array of pairs, where the first element is a `Symbol` representing the column name in the DataFrame
+and the second element is a `String` representing the label to be used in the plots and tables.
+
+# Notes
+
+- This function is mostly expected to be called from a GitHub workflow.
+- Please refer to `SolverBenchmarks.bmark_solvers` for more information on how to write the benchmark script.
+"""
 function run_solver_benchmarks(
   repo_name::AbstractString,
   bmark_dir::AbstractString;
