@@ -10,16 +10,20 @@ using Git
 using GitHub
 using JLD2
 using JSON
+using LibGit2
 using PkgBenchmark
 using Plots
 
 # JSO modules
 using SolverBenchmark
 
-export run_benchmarks
+include("solver_benchmarks.jl")
+
+export run_benchmarks, run_solver_benchmarks
 export profile_solvers_from_pkgbmark
 export create_gist_from_json_dict, create_gist_from_json_file
 export update_gist_from_json_dict, update_gist_from_json_file
+export solver_benchmark_profile_values, solver_benchmark_table_values
 export write_md
 
 const git = Git.git()
@@ -198,7 +202,7 @@ function run_benchmarks(
   )
 
   @info "finished"
-  return nothing
+  return update_gist ? gist_url : new_gist_url
 end
 
 # Utility functions
