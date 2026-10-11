@@ -115,16 +115,23 @@ function run_solver_benchmarks(
       if haskey(reference, key)
         @info "Plotting $key"
         stats_subset = Dict(:this_commit => this_commit[key], :reference => reference[key])
-        p = profile_solvers(stats_subset, costs, costnames, xlabel = "", ylabel = "")
-        fname = "this_commit_vs_reference_$(key)"
-        savefig("$(fname).svg")
-        savefig("profiles_$(fname).pdf")
-        push!(svgs, "$(fname).svg")
-        content = read("$(fname).svg", String)
-        files_dict["$(fname).svg"] = Dict("content" => content)
+        key_costs, key_costnames = varying_costs(stats_subset, costs, costnames)
+        if isempty(key_costs)
+          @info "skipping profiles of $key: identical results for this commit and reference"
+        else
+          p = profile_solvers(stats_subset, key_costs, key_costnames, xlabel = "", ylabel = "")
+          fname = "this_commit_vs_reference_$(key)"
+          savefig("$(fname).svg")
+          savefig("profiles_$(fname).pdf")
+          push!(svgs, "$(fname).svg")
+          content = read("$(fname).svg", String)
+          files_dict["$(fname).svg"] = Dict("content" => content)
+        end
 
         @info "Creating tables for $key"
         tables *= "\n## This commit vs reference: $(key)\n\n"
+        unchanged = setdiff(costnames, key_costnames)
+        isempty(unchanged) || (tables *= "Unchanged: $(join(unchanged, ", ")).\n\n")
         tables *= "### This commit\n\n\n"
         tables *= sprint(io -> pretty_stats(io, this_commit[key][!, stats_columns], hdr_override = Dict(table_values), tf=tf_markdown))
         open("this_commit_$(key).tex", "w") do io

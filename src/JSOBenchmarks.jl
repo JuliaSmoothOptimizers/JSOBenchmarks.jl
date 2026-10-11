@@ -118,6 +118,11 @@ function run_benchmarks(
         property == :name && continue
         commit_values = this_commit_k[!, property]
         reference_values = reference_k[!, property]
+        # bars of height zero, such as gctime for short benchmarks, would be invisible
+        if all(iszero, commit_values) && all(iszero, reference_values)
+          @info "skipping bar plot of $(property) for $(k): all values are zero"
+          continue
+        end
         groupedbar(
           names,
           [commit_values reference_values],
@@ -138,7 +143,8 @@ function run_benchmarks(
         files_dict["$(fname).svg"] = Dict{String, Any}("content" => join(k_svgfile))
       end
 
-      _ = profile_solvers_from_pkgbmark(k_stats)
+      p = profile_solvers_from_pkgbmark(k_stats)
+      p === nothing && continue
       fname = "profiles_this_commit_vs_reference_$(k)"
       savefig("$(fname).svg")  # for the artifact"
       savefig("$(fname).png")  # for the markdown summary
@@ -214,12 +220,33 @@ Produce performance profiles from PkgBenchmark results.
 $(TYPEDSIGNATURES)
 
 The profiles produced are with respect to time, memory, garbage collection time and allocations.
+Costs that are identical for all solvers are left out, and `nothing` is returned if all are.
 """
 function profile_solvers_from_pkgbmark(stats::Dict{Symbol, DataFrame})
   # guard against zero gctimes
   costs =
     [df -> df[!, :time], df -> df[!, :memory], df -> df[!, :gctime] .+ 1, df -> df[!, :allocations]]
-  profile_solvers(stats, costs, ["time", "memory", "gctime+1", "allocations"])
+  costs, costnames = varying_costs(stats, costs, ["time", "memory", "gctime+1", "allocations"])
+  isempty(costs) && return nothing
+  profile_solvers(stats, costs, costnames)
+end
+
+"""
+Return the costs, and their names, that are not the same for all solvers on every problem.
+
+$(TYPEDSIGNATURES)
+
+The performance profile of such a cost is a step at 1 that is hidden by the axes.
+"""
+function varying_costs(stats::AbstractDict, costs, costnames)
+  keep = map(costs) do cost
+    values_per_solver = [cost(df) for df ∈ values(stats)]
+    any(!isequal(first(values_per_solver)), values_per_solver)
+  end
+  for name ∈ costnames[.!keep]
+    @info "skipping profile of $(name): identical for all solvers"
+  end
+  return costs[keep], costnames[keep]
 end
 
 """
